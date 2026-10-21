@@ -42,72 +42,44 @@ proveedor con `/connect`.
 
 ## Requisitos
 
-**OpenCode 1.18 o superior** (probado con la 1.19.3). Para ver tu versión:
+**OpenCode 2.x** (probado con la 2.1.2). Para ver tu versión:
 
 ```
 opencode --version
 ```
+
+¿Sigues en OpenCode 1.x? Usa la versión de la carpeta [`v1/`](v1) (ver
+[Instalación en OpenCode 1.x](#instalación-en-opencode-1x)).
 
 No hace falta instalar Node ni ninguna dependencia: OpenCode ya trae todo lo que usa el
 plugin.
 
 ## Instalación
 
-### 1. Descargar el plugin
+OpenCode carga solo los plugins que encuentra en `plugins/<nombre>/tui.tsx` dentro de su
+carpeta de configuración. No hay que tocar ningún fichero de configuración.
 
-Descarga [`statusline.tsx`](statusline.tsx) (botón **Download raw file** en GitHub) o
-clona el repositorio:
-
-```
-git clone https://github.com/DavidDaganzo/opencode-statusline.git
-cd opencode-statusline
-```
-
-### 2. Copiarlo a la configuración de OpenCode
-
-Ponlo en una carpeta `tui-plugins` dentro de la configuración de OpenCode:
-
-- **Windows:** `C:\Users\TU_USUARIO\.config\opencode\tui-plugins\statusline.tsx`
-- **Mac / Linux:** `~/.config/opencode/tui-plugins/statusline.tsx`
-
-Desde la carpeta donde está `statusline.tsx`:
+### Opción A: con git (recomendada, así se actualiza con `git pull`)
 
 ```powershell
 # Windows (PowerShell)
-New-Item -ItemType Directory -Force "$HOME\.config\opencode\tui-plugins"
-Copy-Item statusline.tsx "$HOME\.config\opencode\tui-plugins\"
+git clone https://github.com/DavidDaganzo/opencode-statusline.git "$HOME\.config\opencode\plugins\statusline"
 ```
 
 ```bash
 # Mac / Linux / Git Bash
-mkdir -p ~/.config/opencode/tui-plugins
-cp statusline.tsx ~/.config/opencode/tui-plugins/
+git clone https://github.com/DavidDaganzo/opencode-statusline.git ~/.config/opencode/plugins/statusline
 ```
 
-> ⚠️ **No** lo pongas en `~/.config/opencode/plugins/`. OpenCode carga esa carpeta
-> automáticamente como plugins de *servidor*, y este es un plugin de *interfaz (TUI)*.
+### Opción B: sin git
 
-### 3. Activarlo en `tui.json`
+1. Descarga [`tui.tsx`](tui.tsx) (botón **Download raw file** en GitHub).
+2. Crea la carpeta `plugins\statusline` dentro de la configuración de OpenCode y pon ahí
+   el fichero, **con el nombre `tui.tsx`**:
+   - **Windows:** `C:\Users\TU_USUARIO\.config\opencode\plugins\statusline\tui.tsx`
+   - **Mac / Linux:** `~/.config/opencode/plugins/statusline/tui.tsx`
 
-OpenCode solo carga los plugins de interfaz que estén en `tui.json`:
-
-- **Windows:** `C:\Users\TU_USUARIO\.config\opencode\tui.json`
-- **Mac / Linux:** `~/.config/opencode/tui.json`
-
-**Si el fichero no existe**, créalo con este contenido (o copia el [`tui.json`](tui.json)
-de este repositorio):
-
-```json
-{
-  "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["./tui-plugins/statusline.tsx"]
-}
-```
-
-**Si ya existe**, añade `"./tui-plugins/statusline.tsx"` a la lista `plugin` (créala si no
-está) respetando las comas del JSON. La ruta es relativa a la carpeta de `tui.json`.
-
-### 4. Reiniciar OpenCode
+### Reiniciar OpenCode
 
 Cierra OpenCode y vuelve a abrirlo. Abajo verás el uso de tu plan. Al abrir una sesión y
 recibir la primera respuesta aparecen también el modelo, el contexto, los tokens y el coste.
@@ -123,12 +95,13 @@ recibir la primera respuesta aparecen también el modelo, el contexto, los token
 
 ## Actualizar
 
-Vuelve a copiar la nueva versión de `statusline.tsx` encima de la anterior y reinicia
-OpenCode. No hace falta tocar `tui.json`.
+- **Con git:** `git pull` dentro de `~/.config/opencode/plugins/statusline` y reinicia
+  OpenCode.
+- **Sin git:** descarga de nuevo `tui.tsx` encima del anterior y reinicia OpenCode.
 
 ## Personalizar
 
-Al principio de `statusline.tsx`:
+Al principio de `tui.tsx`:
 
 - `EUR_RATE`: cambio de dólares a euros (por defecto `0.92`).
 - `USAGE_POLL_MS`: cada cuánto se consulta el uso del plan (por defecto, 60 000 ms).
@@ -136,31 +109,55 @@ Al principio de `statusline.tsx`:
 
 ## Desactivarlo
 
-Sin borrar nada, añade esto a `tui.json`:
+Sin borrar nada, en `~/.config/opencode/cli.json`:
 
 ```json
 {
-  "plugin_enabled": { "daviddaganzo.statusline": false }
+  "plugins": ["*", "-daviddaganzo.statusline"]
 }
 ```
 
-Para quitarlo del todo, borra la entrada de la lista `plugin` y el fichero
-`tui-plugins/statusline.tsx`.
+Para quitarlo del todo, borra la carpeta `~/.config/opencode/plugins/statusline`.
 
 ## Problemas frecuentes
 
-**No aparece la barra.** Comprueba que tienes OpenCode 1.18 o superior y que la ruta de
-`tui.json` apunta al fichero. Para ver si hay errores al cargar el plugin, arranca con:
+**No aparece la barra.**
+- Comprueba que tienes OpenCode 2.x (`opencode --version`).
+- Comprueba que el fichero se llama exactamente `tui.tsx` y está en
+  `plugins/statusline/`, no directamente en `plugins/`.
+- Para ver si el plugin se carga, arranca con logs y busca `daviddaganzo.statusline`:
 
-```
-opencode --print-logs --log-level DEBUG
-```
+  ```
+  opencode --print-logs --log-level debug
+  ```
 
-**Sale la barra pero no el uso de OpenCode Go.** El plugin lee la clave de API que guardó
-`/connect` (en `~/.local/share/opencode/auth.json`). Si entraste con la cuenta de la
-consola en vez de pegando una clave, crea una en
-[opencode.ai/console](https://opencode.ai/console) y conéctala con `/connect`, o ponla en
-la variable de entorno `OPENCODE_API_KEY`.
+**Sale la barra pero no el uso de OpenCode Go.** El plugin usa la clave de API que guardó
+`/connect` (puedes verla con `opencode auth list`). Si entraste con la cuenta de la consola
+en vez de pegando una clave, crea una en [opencode.ai/console](https://opencode.ai/console)
+y conéctala con `/connect`, o ponla en la variable de entorno `OPENCODE_API_KEY`.
+
+## Instalación en OpenCode 1.x
+
+La API de plugins cambió por completo en OpenCode 2.0, así que para la 1.x (1.18 o
+superior) está la versión de la carpeta [`v1/`](v1):
+
+1. Copia [`v1/statusline.tsx`](v1/statusline.tsx) a
+   `~/.config/opencode/tui-plugins/statusline.tsx`. **No** a `plugins/`: en 1.x esa carpeta
+   se carga como plugins de servidor.
+2. Añádelo a `~/.config/opencode/tui.json` (o copia [`v1/tui.json`](v1/tui.json) si no
+   tienes ese fichero):
+
+   ```json
+   {
+     "$schema": "https://opencode.ai/tui.json",
+     "plugin": ["./tui-plugins/statusline.tsx"]
+   }
+   ```
+
+3. Reinicia OpenCode.
+
+Al pasar a la 2.x, borra `tui-plugins/statusline.tsx` e instala la versión nueva como se
+explica arriba.
 
 ## Cómo obtiene el uso
 
@@ -170,8 +167,9 @@ la variable de entorno `OPENCODE_API_KEY`.
 | OpenRouter | `GET https://openrouter.ai/api/v1/key` y `GET https://openrouter.ai/api/v1/credits`. |
 | Claude | `GET https://api.anthropic.com/api/oauth/usage`, lo mismo que usa Claude Code. |
 
-Las consultas van solo a tu propio proveedor y con tu propia clave. El plugin no envía datos
-a ningún otro sitio.
+La clave se pide al propio OpenCode (`credential.list` del cliente), así que también
+funciona si OpenCode se conecta a un servidor remoto. Las consultas van solo a tu propio
+proveedor y con tu propia clave. El plugin no envía datos a ningún otro sitio.
 
 ## Licencia
 
